@@ -3,6 +3,7 @@ import Sidebar from "@/components/Sidebar"
 import TrainingField from "@/pages/TrainingField"
 import Review from "@/pages/Review"
 import QuestionBank from "@/pages/QuestionBank"
+import IntensiveComplete from "@/pages/IntensiveComplete"
 
 export default function App() {
   return (
@@ -14,6 +15,7 @@ export default function App() {
             <Route path="/" element={<TrainingField />} />
             <Route path="/review" element={<Review />} />
             <Route path="/bank" element={<QuestionBank />} />
+            <Route path="/intensive-complete" element={<IntensiveComplete />} />
           </Routes>
         </main>
       </div>

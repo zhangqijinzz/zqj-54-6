@@ -1,11 +1,12 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { PracticeRecord, WeakPoint, TimeLimit } from '@/data/types'
+import { PracticeRecord, WeakPoint, TimeLimit, IntensiveSession, IntensiveQuestionResult } from '@/data/types'
 import { questions } from '@/data/questions'
 
 interface AppState {
   practiceRecords: PracticeRecord[]
   weakPoints: WeakPoint[]
+  intensiveSessions: IntensiveSession[]
 
   addPracticeRecord: (record: PracticeRecord) => void
   addWeakPoint: (questionId: string) => void
@@ -18,6 +19,8 @@ interface AppState {
     streakDays: number
   }
   getTodayPracticeCount: () => number
+  addIntensiveSession: (session: IntensiveSession) => void
+  getLastIntensiveSession: () => IntensiveSession | null
 }
 
 const getToday = () => new Date().toISOString().split('T')[0]
@@ -27,6 +30,7 @@ export const useStore = create<AppState>()(
     (set, get) => ({
       practiceRecords: [],
       weakPoints: [],
+      intensiveSessions: [],
 
       addPracticeRecord: (record) =>
         set((state) => ({
@@ -123,6 +127,16 @@ export const useStore = create<AppState>()(
         const today = getToday()
         return state.practiceRecords.filter((r) => r.completedAt.startsWith(today)).length
       },
+
+      addIntensiveSession: (session) =>
+        set((state) => ({
+          intensiveSessions: [session, ...state.intensiveSessions],
+        })),
+
+      getLastIntensiveSession: () => {
+        const state = get()
+        return state.intensiveSessions.length > 0 ? state.intensiveSessions[0] : null
+      },
     }),
     {
       name: 'interview-bomb-storage',
@@ -154,6 +168,27 @@ export function createPracticeRecord(
     actualTime,
     isTimeout: actualTime >= timeLimit,
     stuckCount,
+    completedAt: new Date().toISOString(),
+  }
+}
+
+export function createIntensiveSession(
+  questionIds: string[],
+  results: IntensiveQuestionResult[]
+): IntensiveSession {
+  const passedCount = results.filter((r) => r.isPassed).length
+  const failedCount = results.filter((r) => !r.isPassed).length
+  const totalTime = results.reduce((sum, r) => sum + r.actualTime, 0)
+  const totalStuck = results.reduce((sum, r) => sum + r.stuckCount, 0)
+
+  return {
+    id: generateId(),
+    questionIds,
+    results,
+    passedCount,
+    failedCount,
+    avgTime: results.length > 0 ? Math.round(totalTime / results.length) : 0,
+    avgStuckCount: results.length > 0 ? Math.round((totalStuck / results.length) * 10) / 10 : 0,
     completedAt: new Date().toISOString(),
   }
 }

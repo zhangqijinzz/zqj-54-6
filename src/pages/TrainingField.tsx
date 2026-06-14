@@ -1,19 +1,20 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useSearchParams, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Shuffle, Play, AlertOctagon, Send, CheckCircle2 } from 'lucide-react'
 import Timer from '@/components/Timer'
 import QuestionCard from '@/components/QuestionCard'
 import StructureHint from '@/components/StructureHint'
 import ResultModal from '@/components/ResultModal'
-import { useStore, getRandomQuestion, createPracticeRecord } from '@/store/useStore'
+import { useStore, getRandomQuestion, createPracticeRecord, createIntensiveSession } from '@/store/useStore'
 import { questions } from '@/data/questions'
-import { CATEGORY_CONFIG, TIME_LIMIT_OPTIONS, TimeLimit, Question } from '@/data/types'
+import { CATEGORY_CONFIG, TIME_LIMIT_OPTIONS, TimeLimit, Question, IntensiveQuestionResult } from '@/data/types'
 
 type Phase = 'select' | 'ready' | 'answering' | 'result'
 
 export default function TrainingField() {
   const [searchParams, setSearchParams] = useSearchParams()
+  const navigate = useNavigate()
   const [phase, setPhase] = useState<Phase>('select')
   const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null)
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
@@ -27,8 +28,9 @@ export default function TrainingField() {
   const qidRef = useRef<string | null>(null)
   const intensiveIdsRef = useRef<string[]>([])
   const intensiveIndexRef = useRef<number>(-1)
+  const intensiveResultsRef = useRef<IntensiveQuestionResult[]>([])
 
-  const { addPracticeRecord, addWeakPoint } = useStore()
+  const { addPracticeRecord, addWeakPoint, addIntensiveSession } = useStore()
 
   useEffect(() => {
     const qid = searchParams.get('qid')
@@ -36,8 +38,12 @@ export default function TrainingField() {
     const intensiveIndex = searchParams.get('intensiveIndex')
 
     if (intensiveIds) {
-      intensiveIdsRef.current = intensiveIds.split(',')
+      const ids = intensiveIds.split(',')
+      intensiveIdsRef.current = ids
       intensiveIndexRef.current = intensiveIndex ? parseInt(intensiveIndex, 10) : -1
+      if (intensiveIndexRef.current === 0) {
+        intensiveResultsRef.current = []
+      }
     }
 
     if (qid && qid !== qidRef.current) {
@@ -125,11 +131,21 @@ export default function TrainingField() {
         return
       }
     }
+    if (ids.length > 0 && idx >= 0 && idx + 1 >= ids.length) {
+      const session = createIntensiveSession(ids, intensiveResultsRef.current)
+      addIntensiveSession(session)
+      intensiveIdsRef.current = []
+      intensiveIndexRef.current = -1
+      intensiveResultsRef.current = []
+      navigate(`/intensive-complete?sessionId=${session.id}`)
+      return
+    }
     intensiveIdsRef.current = []
     intensiveIndexRef.current = -1
+    intensiveResultsRef.current = []
     handleStart()
     setPhase('ready')
-  }, [handleStart])
+  }, [handleStart, addIntensiveSession, navigate])
 
   const handleSaveRecord = useCallback(() => {
     if (!currentQuestion) return
@@ -143,6 +159,18 @@ export default function TrainingField() {
     addPracticeRecord(record)
     if (stuckCount > 0) {
       addWeakPoint(currentQuestion.id)
+    }
+
+    if (intensiveIdsRef.current.length > 0 && intensiveIndexRef.current >= 0) {
+      const isTimeout = elapsedTime >= timeLimit
+      const isPassed = stuckCount === 0 && !isTimeout
+      intensiveResultsRef.current.push({
+        questionId: currentQuestion.id,
+        actualTime: elapsedTime,
+        stuckCount,
+        isTimeout,
+        isPassed,
+      })
     }
   }, [currentQuestion, answer, timeLimit, elapsedTime, stuckCount, addPracticeRecord, addWeakPoint])
 

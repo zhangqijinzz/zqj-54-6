@@ -37,6 +37,25 @@ export interface PracticeStats {
   streakDays: number
 }
 
+export interface IntensiveQuestionResult {
+  questionId: string
+  actualTime: number
+  stuckCount: number
+  isTimeout: boolean
+  isPassed: boolean
+}
+
+export interface IntensiveSession {
+  id: string
+  questionIds: string[]
+  results: IntensiveQuestionResult[]
+  passedCount: number
+  failedCount: number
+  avgTime: number
+  avgStuckCount: number
+  completedAt: string
+}
+
 export const CATEGORY_CONFIG: Record<Category, { label: string; color: string; icon: string }> = {
   'self-intro': { label: '自我介绍', color: '#6366f1', icon: 'User' },
   'project': { label: '项目经历', color: '#f59e0b', icon: 'FolderKanban' },
