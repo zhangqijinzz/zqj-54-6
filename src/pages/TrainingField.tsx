@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Shuffle, Play, AlertOctagon, Send, CheckCircle2 } from 'lucide-react'
+import { Shuffle, Play, AlertOctagon, CheckCircle2 } from 'lucide-react'
 import Timer from '@/components/Timer'
 import QuestionCard from '@/components/QuestionCard'
 import StructureHint from '@/components/StructureHint'
@@ -73,6 +73,9 @@ export default function TrainingField() {
   }, [selectedCategory])
 
   const handleStart = useCallback(() => {
+    intensiveIdsRef.current = []
+    intensiveIndexRef.current = -1
+    intensiveResultsRef.current = []
     const q = pickQuestion()
     if (q) {
       setPhase('ready')
@@ -164,13 +167,21 @@ export default function TrainingField() {
     if (intensiveIdsRef.current.length > 0 && intensiveIndexRef.current >= 0) {
       const isTimeout = elapsedTime >= timeLimit
       const isPassed = stuckCount === 0 && !isTimeout
-      intensiveResultsRef.current.push({
+      const newResult = {
         questionId: currentQuestion.id,
         actualTime: elapsedTime,
         stuckCount,
         isTimeout,
         isPassed,
-      })
+      }
+      const existingIndex = intensiveResultsRef.current.findIndex(
+        (r) => r.questionId === currentQuestion.id
+      )
+      if (existingIndex >= 0) {
+        intensiveResultsRef.current[existingIndex] = newResult
+      } else {
+        intensiveResultsRef.current.push(newResult)
+      }
     }
   }, [currentQuestion, answer, timeLimit, elapsedTime, stuckCount, addPracticeRecord, addWeakPoint])
 
@@ -181,6 +192,9 @@ export default function TrainingField() {
 
   const handleResultClose = useCallback(() => {
     handleSaveRecord()
+    intensiveIdsRef.current = []
+    intensiveIndexRef.current = -1
+    intensiveResultsRef.current = []
     setPhase('select')
     setCurrentQuestion(null)
   }, [handleSaveRecord])

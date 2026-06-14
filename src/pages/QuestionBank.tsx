@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Search, X, Star, Tag, BookOpen, ChevronRight } from 'lucide-react'
+import { Search, X, Tag, BookOpen, ChevronRight } from 'lucide-react'
 import { questions } from '@/data/questions'
 import { CATEGORY_CONFIG, STRUCTURE_CONFIG, Category, Difficulty } from '@/data/types'
 

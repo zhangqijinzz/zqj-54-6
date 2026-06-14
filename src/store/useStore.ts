@@ -101,10 +101,9 @@ export const useStore = create<AppState>()(
         })
 
         const uniqueDays = new Set(records.map((r) => r.completedAt.split('T')[0]))
-        const sortedDays = Array.from(uniqueDays).sort().reverse()
         let streakDays = 0
         const today = getToday()
-        let checkDate = new Date(today)
+        const checkDate = new Date(today)
 
         for (let i = 0; i < 365; i++) {
           const dateStr = checkDate.toISOString().split('T')[0]

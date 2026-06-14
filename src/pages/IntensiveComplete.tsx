@@ -227,7 +227,7 @@ export default function IntensiveComplete() {
             >
               <p className="text-white/60 text-sm font-medium mb-4">答题详情</p>
               <div className="space-y-3">
-                {currentSession.results.map((result, i) => {
+                {currentSession.results.map((result) => {
                   const q = questions.find((q) => q.id === result.questionId)
                   if (!q) return null
                   return (

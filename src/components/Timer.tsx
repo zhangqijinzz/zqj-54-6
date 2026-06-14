@@ -7,10 +7,10 @@ interface TimerProps {
   isRunning: boolean
   onTimeUp: () => void
   onTick?: (remaining: number) => void
-  onReset: () => void
+  onReset?: () => void
 }
 
-export default function Timer({ timeLimit, isRunning, onTimeUp, onTick, onReset }: TimerProps) {
+export default function Timer({ timeLimit, isRunning, onTimeUp, onTick }: TimerProps) {
   const [remaining, setRemaining] = useState<number>(timeLimit)
   const [hasCalledTimeUp, setHasCalledTimeUp] = useState(false)
 
